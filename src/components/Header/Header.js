@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import './Header.css';
 import logOutBlack from '../../images/header__out-symbol/out-black.svg'
@@ -6,10 +6,8 @@ import logOutWhite from '../../images/header__out-symbol/out-white.svg'
 import menu from '../../images/header__menu/menu.svg';
 import menuBlack from '../../images/header__menu/menu_black.svg';
 import close from '../../images/header__menu/close.svg'
-import CurrentUserContext from '../../contexts/CurrentUserContext';
 
-function Header({ isLoggedIn, location, openLogPopup, loggOut }){
-    let user = useContext(CurrentUserContext);
+function Header({ isLoggedIn, location, openLogPopup, loggOut, username }){
     const [isNavbarDisplayed, setIsNavbarDisplayed] = useState(false);
     const [buttonImage, setButtonImage] = useState(menu);
     const handleButtonClick = () =>{
@@ -32,16 +30,6 @@ function Header({ isLoggedIn, location, openLogPopup, loggOut }){
         }
         setIsNavbarDisplayed(false);
       }, [location]);
-
-      const handleOpenPopup = () =>{
-          openLogPopup();
-          setIsNavbarDisplayed(false);
-          if(location === '/saved-news'){
-            setButtonImage(menuBlack);
-        }else{
-            setButtonImage(menu);
-        }
-      }
     return (
         <header className={`header ${isNavbarDisplayed ? 'header_black' : ''}`}>
             <h2 className='header__title'>NewsExplorer</h2>
@@ -58,10 +46,10 @@ function Header({ isLoggedIn, location, openLogPopup, loggOut }){
                 }
                 {isLoggedIn === true ? <div  onClick={loggOut} className={`header__log-out ${location === '/saved-news' ? 'header__log-out_saved' : ''}`}>
                     <p className={`header__user ${location === '/saved-news' ? 'header__user_saved' : 'header__user_main'}`}>
-                       {user.username}
+                       {username}
                     </p>
                     <img src={location !== '/saved-news' ? logOutWhite : isNavbarDisplayed ? logOutWhite : logOutBlack} alt='log-out' className='header__out-symbol'/>
-                </div> : <p onClick={handleOpenPopup}
+                </div> : <p onClick={openLogPopup}
                 className={`header__log ${location === '/saved-news' ? 'header__log_saved-route' : ''}`}>Sign In</p>}
             </div>
         </header>
