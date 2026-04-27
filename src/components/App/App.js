@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import Popup from '../Popup/Popup';
 import PopupInput from '../PopupInput/PopupInput';
 import newsApi from '../../utils/NewsApi';
+import mainApi from '../../utils/MainApi';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import SuccesPopup from '../SuccesPopup/SuccesPopup';
 
@@ -19,7 +20,7 @@ function App() {
   const [ isRegisterPopupOpen, setRegisterPopupOpen ] = useState(false);
   const [ isSuccesPopupOpen, setIsSuccesPopupOpen ] = useState(false);
   const [ newsResults, setNewsResults ] = useState([]);
-  const [ newsIndex, setNewsIndex ] = useState(3);
+  const [ newsIndex, setNewsIndex ] = useState(4);
   const [ isNewsOpen, setIsNewsOpen] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ articlesFound, setIsArticlesFound ] = useState(true);
@@ -29,32 +30,62 @@ function App() {
   const [ username, setUsername ] = useState('');
   const [ isLoggedIn, setIsLoggedIn ] = useState(false);
   const [ isValid, setIsValid ] = useState(false);
+  const [ savedArticles, setSavedArticles ] = useState([]);
 
   let location = useLocation();
   const currentDate = new Date().toLocaleDateString();
   const previousDate = new Date();
   previousDate.setDate(previousDate.getDate() - 7);
 
-  //vanilla logs waiting for backend implementation
-  const handleLoggIn = () =>{
-    localStorage.setItem('password', password);
-    localStorage.setItem('email', email);
-    localStorage.setItem('username', username);
-    closeAllPopups();
-    setIsLoggedIn(true);
+  const handleLoggIn = () => {
+    mainApi.login(email, password)
+      .then((res) => {
+        localStorage.setItem('token', res.token);
+        return mainApi.getUser();
+      })
+      .then((user) => {
+        setUsername(user.name);
+        setIsLoggedIn(true);
+        closeAllPopups();
+        return mainApi.getSavedArticles();
+      })
+      .then((articles) => {
+        setSavedArticles(articles);
+      })
+      .catch((err) => console.error('Login error:', err));
   }
+
+  const handleRegister = () => {
+    mainApi.register(username, email, password)
+      .then(() => {
+        closeAllPopups();
+        setIsSuccesPopupOpen(true);
+      })
+      .catch((err) => console.error('Register error:', err));
+  }
+
   const handleLoggOut = () => {
-    localStorage.removeItem('password');
-    localStorage.removeItem('email');
-    localStorage.removeItem('username');
+    localStorage.removeItem('token');
     setIsLoggedIn(false);
+    setUsername('');
+    setSavedArticles([]);
   }
 
   useEffect(() => {
-    setUsername(localStorage.getItem('username'));
-    if(localStorage.getItem('email') != null){
-      setUsername(localStorage.getItem('username'));
-      setIsLoggedIn(true);
+    const token = localStorage.getItem('token');
+    if (token) {
+      mainApi.getUser()
+        .then((user) => {
+          setUsername(user.name);
+          setIsLoggedIn(true);
+          return mainApi.getSavedArticles();
+        })
+        .then((articles) => {
+          setSavedArticles(articles);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+        });
     }
   }, []);
   
@@ -64,7 +95,7 @@ function App() {
     setIsLoading(true);
     newsApi.searchByKeyword(topic, previousDate, currentDate)
     .then((res) => {
-      setNewsIndex(3);
+      setNewsIndex(4);
       setNewsResults(res.articles);
       if(res.totalResults !== 0){
         setIsNewsOpen(true); 
@@ -81,7 +112,7 @@ function App() {
   }
 
   const displayedNews = () => {
-    setNewsIndex( newsIndex + 3 );
+    setNewsIndex( newsIndex + 4 );
   }
 
   const handleEscClose = (evt) => {
@@ -183,10 +214,7 @@ function App() {
           password={password}
           username={username}
           isValid={isValid}
-          onSubmit={()=>{
-            closeAllPopups();
-            setIsSuccesPopupOpen(true);
-            localStorage.setItem('usernmae', username)}}>
+          onSubmit={handleRegister}>
           <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityRegister} name='Sign-up Email' />
           <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityRegister} name='Sign-up Password' />
           <PopupInput value={username} handleChange={setUsername} vanilaValidate={handleValidityRegister} name='Sign-up Username' />
