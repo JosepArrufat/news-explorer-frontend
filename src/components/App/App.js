@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import Popup from '../Popup/Popup';
 import PopupInput from '../PopupInput/PopupInput';
 import newsApi from '../../utils/NewsApi';
+import * as mainApi from '../../utils/MainApi';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import SuccesPopup from '../SuccesPopup/SuccesPopup';
 
@@ -29,36 +30,95 @@ function App() {
   const [ username, setUsername ] = useState('');
   const [ isLoggedIn, setIsLoggedIn ] = useState(false);
   const [ isValid, setIsValid ] = useState(false);
+  const [ currentUser, setCurrentUser ] = useState(null);
+  const [ savedArticles, setSavedArticles ] = useState([]);
+  const [ currentKeyword, setCurrentKeyword ] = useState('');
 
   let location = useLocation();
   const currentDate = new Date().toLocaleDateString();
   const previousDate = new Date();
   previousDate.setDate(previousDate.getDate() - 7);
 
-  //vanilla logs waiting for backend implementation
-  const handleLoggIn = () =>{
-    localStorage.setItem('password', password);
-    localStorage.setItem('email', email);
-    localStorage.setItem('username', username);
-    closeAllPopups();
-    setIsLoggedIn(true);
-  }
+  const handleLoggIn = (loginEmail, loginPassword) => {
+    return mainApi.login(loginEmail, loginPassword)
+      .then((data) => {
+        localStorage.setItem('token', data.token);
+        return mainApi.getUser();
+      })
+      .then((user) => {
+        setCurrentUser(user);
+        setUsername(user.name);
+        return mainApi.getSavedArticles();
+      })
+      .then((articles) => {
+        setSavedArticles(articles);
+        setIsLoggedIn(true);
+        closeAllPopups();
+      });
+  };
+
+  const handleRegister = (regEmail, regPassword, regUsername) => {
+    return mainApi.register(regEmail, regPassword, regUsername)
+      .then(() => {
+        closeAllPopups();
+        setIsSuccesPopupOpen(true);
+      });
+  };
+
   const handleLoggOut = () => {
-    localStorage.removeItem('password');
-    localStorage.removeItem('email');
-    localStorage.removeItem('username');
+    localStorage.removeItem('token');
     setIsLoggedIn(false);
-  }
+    setCurrentUser(null);
+    setUsername('');
+    setSavedArticles([]);
+  };
+
+  const handleSaveArticle = (article) => {
+    const articleData = {
+      keyword: currentKeyword || '',
+      title: article.title,
+      text: article.description,
+      date: article.publishedAt,
+      source: article.source.name,
+      link: article.url,
+      image: article.urlToImage,
+    };
+    mainApi.saveArticle(articleData)
+      .then((saved) => {
+        setSavedArticles([...savedArticles, saved]);
+      })
+      .catch(() => {});
+  };
+
+  const handleDeleteArticle = (articleId) => {
+    mainApi.deleteArticle(articleId)
+      .then(() => {
+        setSavedArticles(savedArticles.filter((a) => a._id !== articleId));
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
-    setUsername(localStorage.getItem('username'));
-    if(localStorage.getItem('email') != null){
-      setUsername(localStorage.getItem('username'));
-      setIsLoggedIn(true);
+    const token = localStorage.getItem('token');
+    if (token) {
+      mainApi.getUser()
+        .then((user) => {
+          setCurrentUser(user);
+          setUsername(user.name);
+          return mainApi.getSavedArticles();
+        })
+        .then((articles) => {
+          setSavedArticles(articles);
+          setIsLoggedIn(true);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+        });
     }
   }, []);
   
   const searchNews = (topic) => {
+    setCurrentKeyword(topic);
     setIsNewsOpen(false);
     setIsArticlesFound(true);
     setIsLoading(true);
@@ -132,14 +192,13 @@ function App() {
     }
   }
 
-  /*Waiting for backend validation*/
   const handleValidityRegister = () =>{
     if(password !== '' && isEmail === true && username !== ''){
       setIsValid(true);
     } else{
       setIsValid(false);
     }
-}
+  }
   return (
     <Routes>
       <Route exact path='/' element={<div className='App container'>
@@ -150,7 +209,9 @@ function App() {
           openLogPopup={handleLogPopupOpen} 
           location={location.pathname}
           loggOut={handleLoggOut}
-          username={username}/>
+          username={username}
+          currentUser={currentUser}
+          savedArticles={savedArticles}/>
           {
             <>
              {isLoading &&
@@ -165,7 +226,10 @@ function App() {
             newsIndex={newsIndex} 
             showMore={displayedNews}
             location={location}
-            isLoggedIn={isLoggedIn}/>
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSave={handleSaveArticle}
+            onDelete={handleDeleteArticle}/>
             }
             </>
           }
@@ -183,10 +247,7 @@ function App() {
           password={password}
           username={username}
           isValid={isValid}
-          onSubmit={()=>{
-            closeAllPopups();
-            setIsSuccesPopupOpen(true);
-            localStorage.setItem('usernmae', username)}}>
+          onSubmit={() => handleRegister(email, password, username)}>
           <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityRegister} name='Sign-up Email' />
           <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityRegister} name='Sign-up Password' />
           <PopupInput value={username} handleChange={setUsername} vanilaValidate={handleValidityRegister} name='Sign-up Username' />
@@ -201,7 +262,7 @@ function App() {
           email={email}
           password={password}
           isValid={isValid}
-          onSubmit={handleLoggIn}>
+          onSubmit={() => handleLoggIn(email, password)}>
           <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityLoggin} name='Sign-in Email' />
           <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityLoggin} name='Sign-in Password' />
         </Popup>
@@ -221,6 +282,8 @@ function App() {
             location={location.pathname}
             loggOut={handleLoggOut}
             username={username}
+            currentUser={currentUser}
+            savedArticles={savedArticles}
             isValid={isValid}/>
             {isNewsOpen &&  
             <News 
@@ -228,7 +291,10 @@ function App() {
             newsIndex={newsIndex} 
             showMore={displayedNews}
             location={location}
-            isLoggedIn={isLoggedIn}/>
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSave={handleSaveArticle}
+            onDelete={handleDeleteArticle}/>
             }
         </Main>
         <Footer />

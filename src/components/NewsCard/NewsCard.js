@@ -1,29 +1,33 @@
 import './NewsCard.css';
-import { useState } from 'react';
 import saveBlue from '../../images/news__save/save-blue.svg';
 import saveWhite from '../../images/news__save/save-white.svg';
 
-function NewsCard({ newInfo, location, isLoggedIn }) {
-    const [saveImage, setSaveImage] = useState(saveWhite);
+function NewsCard({ newInfo, location, isLoggedIn, savedArticles, onSave, onDelete }) {
     const descriptionString = newInfo.description;
-    const description = descriptionString.replace(/((<ul>|<ol>)|<li>|<\/li>|(<\/ul>|<\/ol>))/g, '');
-    const dateString = newInfo.publishedAt
-    const date = dateString.slice(0, 10);
+    const description = descriptionString ? descriptionString.replace(/((<ul>|<ol>)|<li>|<\/li>|(<\/ul>|<\/ol>))/g, '') : '';
+    const dateString = newInfo.publishedAt;
+    const date = dateString ? dateString.slice(0, 10) : '';
     const displayedDate = new Date(date);
     const testDate = displayedDate.toLocaleDateString("default", {
         year: "numeric",
         day: "numeric",
         month: "long",
-    })
-    const handleSave = () =>{
-        if (saveImage === saveWhite){
-            setSaveImage(saveBlue)
-        } else{
-            setSaveImage(saveWhite)
+    });
+
+    const savedArticle = savedArticles && savedArticles.find((a) => a.link === newInfo.url);
+    const isSaved = Boolean(savedArticle);
+
+    const handleSave = () => {
+        if (!isLoggedIn) return;
+        if (isSaved) {
+            onDelete(savedArticle._id);
+        } else {
+            onSave(newInfo);
         }
-    }
+    };
+
   return (
-    <li className='news__element' key={newInfo.source.id + Math.floor(Math.random() * 1000)}>
+    <li className='news__element'>
       <a className='news__link' href={newInfo.url} target="_blank" rel="noreferrer">
         <img
           src={newInfo.urlToImage}
@@ -38,9 +42,9 @@ function NewsCard({ newInfo, location, isLoggedIn }) {
         </div>
       </a>
       {location.pathname === "/saved-news" ? (
-           <button className='news__delete'></button>
+           <button className='news__delete' onClick={() => savedArticle && onDelete(savedArticle._id)}></button>
         ) : (
-            <button className='news__save' onClick={handleSave} style={{backgroundImage: `url(${saveImage})`}}></button>
+            <button className='news__save' onClick={handleSave} style={{backgroundImage: `url(${isSaved ? saveBlue : saveWhite})`}}></button>
         )}
           {location.pathname === "/saved-news" ? (
            <p className='news__save-text'>Remove from Saved</p>
