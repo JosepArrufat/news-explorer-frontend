@@ -1,63 +1,54 @@
-class Api {
-  constructor({ baseUrl }) {
-    this._baseUrl = baseUrl;
-  }
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://news-explorer-backend-ev2z.onrender.com';
 
-  _checkResponse(res) {
-    if (res.ok) {
-      return res.json();
-    }
-    return Promise.reject(Error);
-  }
+const _checkResponse = (res) => {
+  if (res.ok) return res.json();
+  return Promise.reject(`Error: ${res.status}`);
+};
 
-  getNews(jwt) {
-    return fetch(`${this._baseUrl}/articles`, {
-      headers: {
-        authorization: `Bearer ${jwt}`,
-        method: 'GET',
-      },
-    }).then((res) => this._checkResponse(res));
-  }
+const getToken = () => localStorage.getItem('token');
 
-  getUserData(jwt) {
-    return fetch(`${this._baseUrl}/users/me`, {
-      headers: {
-        authorization: `Bearer ${jwt}`,
-      },
-    }).then((res) => this._checkResponse(res));
-  }
+export const register = (email, password, name) => {
+  return fetch(`${BASE_URL}/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  }).then(_checkResponse);
+};
 
-  addNews(keyword, title, text, date, source, link, image, jwt) {
-    return fetch(`${this._baseUrl}/articles`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        keyword,
-        title,
-        text,
-        date,
-        source,
-        link,
-        image,
-      }),
-    }).then((res) => this._checkResponse(res));
-  }
+export const login = (email, password) => {
+  return fetch(`${BASE_URL}/signin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  }).then(_checkResponse);
+};
 
-  removeCard(id, jwt) {
-    return fetch(`${this._baseUrl}/articles/${id}`, {
-      method: 'DELETE',
-      headers: {
-        authorization: `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
-      },
-    }).then((res) => this._checkResponse(res));
-  }
-}
+export const getUser = () => {
+  return fetch(`${BASE_URL}/users/me`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
 
-const api = new Api({
-  baseUrl: 'https://api.pep.news.students.nomoredomainssbs.ru',
-});
-export default api;
+export const getSavedArticles = () => {
+  return fetch(`${BASE_URL}/articles`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
+
+export const saveArticle = (article) => {
+  return fetch(`${BASE_URL}/articles`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(article),
+  }).then(_checkResponse);
+};
+
+export const deleteArticle = (articleId) => {
+  return fetch(`${BASE_URL}/articles/${articleId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
