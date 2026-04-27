@@ -1,7 +1,7 @@
 class NewsApi {
     constructor(params) {
       this.baseUrl = params.baseUrl;
-      this.headers = params.headers;
+      this.apiKey = params.apiKey;
     }
   
     _checkResponse(res) {
@@ -12,18 +12,18 @@ class NewsApi {
     }
   
     searchByKeyword(keyword, date, currentDate) {
-      return fetch(this.baseUrl + `/everything?q=${keyword}&pageSize=100&from=${date}&to=${currentDate}`, {
-        headers: this.headers,
-        method: "GET",
-      }).then((res) => this._checkResponse(res));
+      return fetch(
+        `${this.baseUrl}/everything?q=${encodeURIComponent(keyword)}&pageSize=100&from=${date}&to=${currentDate}&apiKey=${this.apiKey}`,
+        {
+          method: "GET",
+        }
+      ).then((res) => this._checkResponse(res));
     }
   }
   
   const newsApi = new NewsApi({
       baseUrl: "https://newsapi.org/v2",
-      headers: {
-          "Authorization": process.env.REACT_APP_NEWS_API_KEY
-      }
+      apiKey: process.env.REACT_APP_NEWS_API_KEY,
   });
   
   export default newsApi;

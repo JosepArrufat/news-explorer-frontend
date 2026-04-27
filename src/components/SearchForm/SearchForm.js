@@ -2,7 +2,6 @@ import './SearchForm.css';
 import { useState } from 'react';
 
 function SearchForm(props) {
-  const [isActive, setIsActive] = useState(false);
   const [topic, setTopic] = useState('');
 
   const handleChange = (evt) => {
@@ -25,10 +24,6 @@ function SearchForm(props) {
       <button
         type='submit'
         className='finder-form__button'
-        style={{
-          backgroundColor: isActive ? '#2A65CC' : '',
-          color: isActive ? 'white' : '',
-        }}
       >
         Search
       </button>
