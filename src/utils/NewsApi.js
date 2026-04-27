@@ -22,8 +22,8 @@ class NewsApi {
   const newsApi = new NewsApi({
       baseUrl: "https://newsapi.org/v2",
       headers: {
-          "Authorization": "93745731c1fa498691508b39888ff4cb"
+          "Authorization": process.env.REACT_APP_NEWS_API_KEY
       }
-  })
+  });
   
   export default newsApi;
