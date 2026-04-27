@@ -35,9 +35,10 @@ function App() {
   const [ currentKeyword, setCurrentKeyword ] = useState('');
 
   let location = useLocation();
-  const currentDate = new Date().toLocaleDateString();
+  const currentDate = new Date().toISOString().split('T')[0];
   const previousDate = new Date();
   previousDate.setDate(previousDate.getDate() - 7);
+  const previousDateString = previousDate.toISOString().split('T')[0];
 
   const handleLoggIn = (loginEmail, loginPassword) => {
     return mainApi.login(loginEmail, loginPassword)
@@ -122,7 +123,7 @@ function App() {
     setIsNewsOpen(false);
     setIsArticlesFound(true);
     setIsLoading(true);
-    newsApi.searchByKeyword(topic, previousDate, currentDate)
+    newsApi.searchByKeyword(topic, previousDateString, currentDate)
     .then((res) => {
       setNewsIndex(3);
       setNewsResults(res.articles);
