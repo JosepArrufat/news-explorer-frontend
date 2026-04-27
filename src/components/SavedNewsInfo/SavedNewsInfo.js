@@ -1,13 +1,19 @@
 import './SavedNewsInfo.css';
 
-function SavedNewsInfo() {
+function SavedNewsInfo({ currentUser, savedArticles }) {
+  const articles = savedArticles || [];
+  const keywords = [...new Set(articles.map((a) => a.keyword).filter(Boolean))];
+  const displayedKeywords = keywords.slice(0, 3).join(', ');
+  const extra = keywords.length > 3 ? `, and ${keywords.length - 3} other${keywords.length - 3 > 1 ? 's' : ''}` : '';
+  const username = currentUser ? currentUser.name : 'User';
+
   return (
     <div className='saved-news'>
       <div className='saved-news__content'>
         <p className='saved-news__title'>Saved articles</p>
-        <h1 className='saved-news__info'>User, you have saved X articles</h1>
+        <h1 className='saved-news__info'>{username}, you have saved {articles.length} articles</h1>
         <h2 className='saved-news__subtitle'>
-           Nature, Yellowstone, and 2 other
+          {displayedKeywords}{extra}
         </h2>
       </div>
     </div>

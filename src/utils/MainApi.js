@@ -1,66 +1,54 @@
-class MainApi {
-  constructor(baseUrl) {
-    this.baseUrl = baseUrl;
-  }
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://news-explorer-backend-ev2z.onrender.com';
 
-  _checkResponse(res) {
-    if (res.ok) {
-      return res.json();
-    }
-    return res.json().then((err) => Promise.reject(err));
-  }
+const _checkResponse = (res) => {
+  if (res.ok) return res.json();
+  return Promise.reject(`Error: ${res.status}`);
+};
 
-  _authHeaders() {
-    return {
+const getToken = () => localStorage.getItem('token');
+
+export const register = (email, password, name) => {
+  return fetch(`${BASE_URL}/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  }).then(_checkResponse);
+};
+
+export const login = (email, password) => {
+  return fetch(`${BASE_URL}/signin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  }).then(_checkResponse);
+};
+
+export const getUser = () => {
+  return fetch(`${BASE_URL}/users/me`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
+
+export const getSavedArticles = () => {
+  return fetch(`${BASE_URL}/articles`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
+
+export const saveArticle = (article) => {
+  return fetch(`${BASE_URL}/articles`, {
+    method: 'POST',
+    headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-  }
+      'Authorization': `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(article),
+  }).then(_checkResponse);
+};
 
-  register(name, email, password) {
-    return fetch(`${this.baseUrl}/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    }).then(this._checkResponse);
-  }
-
-  login(email, password) {
-    return fetch(`${this.baseUrl}/signin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    }).then(this._checkResponse);
-  }
-
-  getUser() {
-    return fetch(`${this.baseUrl}/users/me`, {
-      headers: this._authHeaders(),
-    }).then(this._checkResponse);
-  }
-
-  getSavedArticles() {
-    return fetch(`${this.baseUrl}/articles`, {
-      headers: this._authHeaders(),
-    }).then(this._checkResponse);
-  }
-
-  saveArticle(article) {
-    return fetch(`${this.baseUrl}/articles`, {
-      method: 'POST',
-      headers: this._authHeaders(),
-      body: JSON.stringify(article),
-    }).then(this._checkResponse);
-  }
-
-  deleteArticle(articleId) {
-    return fetch(`${this.baseUrl}/articles/${articleId}`, {
-      method: 'DELETE',
-      headers: this._authHeaders(),
-    }).then(this._checkResponse);
-  }
-}
-
-const mainApi = new MainApi(process.env.REACT_APP_API_URL);
-
-export default mainApi;
+export const deleteArticle = (articleId) => {
+  return fetch(`${BASE_URL}/articles/${articleId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  }).then(_checkResponse);
+};
