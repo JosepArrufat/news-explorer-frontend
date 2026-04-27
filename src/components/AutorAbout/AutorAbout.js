@@ -1,5 +1,5 @@
 import './AutorAbout.css';
-import autorPhoto from '../../images/autor-photo/author-image.svg'
+import autorPhoto from '../../images/autor-photo/author-photo.png'
 
 function AutorAbout(){
     return(

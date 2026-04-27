@@ -1,328 +1,309 @@
 import './App.css';
-import { useLocation, Route, Routes, Navigate } from 'react-router-dom';
-import CurrentUserContext from '../../contexts/CurrentUserContext';
-import mainApi from '../../utils/MainApi';
-import * as auth from '../../utils/Auth';
+import { useLocation, Route, Routes, Navigate } from "react-router-dom";
 import Main from '../Main/Main';
 import MainFunction from '../MainFunction/MainFunction';
 import AutorAbout from '../AutorAbout/AutorAbout';
 import Footer from '../Footer/Footer';
 import News from '../News/News';
-import SavedNews from '../SavedNews/SavedNews';
 import NoResults from '../NoResults/NoResults';
 import Loader from '../Loader/Loader';
 import { useState, useEffect } from 'react';
+import Popup from '../Popup/Popup';
+import PopupInput from '../PopupInput/PopupInput';
 import newsApi from '../../utils/NewsApi';
+import * as mainApi from '../../utils/MainApi';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import SuccesPopup from '../SuccesPopup/SuccesPopup';
-import Login from '../Login/Login';
-import Signup from '../SignUp/SignUp';
-
 
 function App() {
-  const [isLogPopupOpen, setLogPopupOpen] = useState(false);
-  const [isRegisterPopupOpen, setRegisterPopupOpen] = useState(false);
-  const [isSuccesPopupOpen, setIsSuccesPopupOpen] = useState(false);
-  const [newsResults, setNewsResults] = useState([]);
-  const [savedNews, setSavedNews] = useState([]);
-  const [newsIndex, setNewsIndex] = useState(3);
-  const [isNewsOpen, setIsNewsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [articlesFound, setIsArticlesFound] = useState(true);
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [jwt, setJWT] = useState(localStorage.getItem('jwt'));
-  const [signUpError, setSignUpError] = useState(undefined);
-  const [loginError, setLogginError] = useState(undefined);
-  const [topic, setTopic] = useState(undefined);
-
-  const [currentUser, setCurrentUser] = useState({});
+  const [ isLogPopupOpen, setLogPopupOpen ] = useState(false);
+  const [ isRegisterPopupOpen, setRegisterPopupOpen ] = useState(false);
+  const [ isSuccesPopupOpen, setIsSuccesPopupOpen ] = useState(false);
+  const [ newsResults, setNewsResults ] = useState([]);
+  const [ newsIndex, setNewsIndex ] = useState(3);
+  const [ isNewsOpen, setIsNewsOpen] = useState(false);
+  const [ isLoading, setIsLoading ] = useState(false);
+  const [ articlesFound, setIsArticlesFound ] = useState(true);
+  const [ password, setPassword ] = useState('');
+  const [ email, setEmail ] = useState('');
+  const [ isEmail, setIsEmail ] = useState(false);
+  const [ username, setUsername ] = useState('');
+  const [ isLoggedIn, setIsLoggedIn ] = useState(false);
+  const [ isValid, setIsValid ] = useState(false);
+  const [ currentUser, setCurrentUser ] = useState(null);
+  const [ savedArticles, setSavedArticles ] = useState([]);
+  const [ currentKeyword, setCurrentKeyword ] = useState('');
 
   let location = useLocation();
   const currentDate = new Date().toLocaleDateString();
   const previousDate = new Date();
   previousDate.setDate(previousDate.getDate() - 7);
 
-  const handleSignup = () => {
-    auth
-      .register(email, password, username)
+  const handleLoggIn = (loginEmail, loginPassword) => {
+    return mainApi.login(loginEmail, loginPassword)
+      .then((data) => {
+        localStorage.setItem('token', data.token);
+        return mainApi.getUser();
+      })
+      .then((user) => {
+        setCurrentUser(user);
+        setUsername(user.name);
+        return mainApi.getSavedArticles();
+      })
+      .then((articles) => {
+        setSavedArticles(articles);
+        setIsLoggedIn(true);
+        closeAllPopups();
+      });
+  };
+
+  const handleRegister = (regEmail, regPassword, regUsername) => {
+    return mainApi.register(regEmail, regPassword, regUsername)
       .then(() => {
         closeAllPopups();
         setIsSuccesPopupOpen(true);
-      })
-      .catch((err) => {
-        setSignUpError(err.message);
-      })
-  };
-
-  const handleLoggIn = () => {
-    auth
-      .login(email, password)
-      .then((res) => {
-        setCurrentUser(res);
-        setJWT(res.token);
-        setIsLoggedIn(true);
-        closeAllPopups()
-      })
-      .catch((err) => {
-        setLogginError(err.message);
-      })
+      });
   };
 
   const handleLoggOut = () => {
-    localStorage.removeItem('jwt');
-    setJWT(localStorage.getItem('jwt'));
-    localStorage.removeItem('email');
-    localStorage.removeItem('username');
-    setCurrentUser(undefined);
+    localStorage.removeItem('token');
     setIsLoggedIn(false);
-    setIsNewsOpen(false);
-    setSavedNews([]);
-  };
-  const getSavedNews = () => {
-    mainApi
-      .getNews(jwt)
-      .then((res) => {
-        setSavedNews(res.data.reverse());
-      })
-      .catch((err) => {
-        console.log(`Error: ${err}`);
-      });
-  };
-  const addNews = (keyword, title, text, date, source, link, image, owner) => {
-    mainApi
-      .addNews(keyword, title, text, date, source, link, image, jwt)
-      .then((card) => {
-        setSavedNews([card.data, ...savedNews]);
-        return card; 
-      })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => {
-        console.log(`Error: ${err}`);
-      });
+    setCurrentUser(null);
+    setUsername('');
+    setSavedArticles([]);
   };
 
-  const removeNews = (id) =>{
-    mainApi
-      .removeCard(id, jwt)
-      .then((article) => {
-        const remaining = savedNews.filter((element) => element._id !== article.data._id);
-        setSavedNews(remaining);
+  const handleSaveArticle = (article) => {
+    const articleData = {
+      keyword: currentKeyword || '',
+      title: article.title,
+      text: article.description,
+      date: article.publishedAt,
+      source: article.source.name,
+      link: article.url,
+      image: article.urlToImage,
+    };
+    mainApi.saveArticle(articleData)
+      .then((saved) => {
+        setSavedArticles([...savedArticles, saved]);
       })
-      .catch((err) => {
-        console.log(`Error: ${err}`);
-      });
-  }
+      .catch(() => {});
+  };
+
+  const handleDeleteArticle = (articleId) => {
+    mainApi.deleteArticle(articleId)
+      .then(() => {
+        setSavedArticles(savedArticles.filter((a) => a._id !== articleId));
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
-    getSavedNews();
-    if(location.pathname === '/saved-news' && !isLoggedIn){
-      handleLogPopupOpen();
-    }
-    if (jwt != null) {
-      auth
-        .checkToken(jwt)
-        .then((res) => {
-          if (res) {
-            setCurrentUser(res);
-            setIsLoggedIn(true);
-          } else {
-            localStorage.removeItem('jwt');
-          }
+    const token = localStorage.getItem('token');
+    if (token) {
+      mainApi.getUser()
+        .then((user) => {
+          setCurrentUser(user);
+          setUsername(user.name);
+          return mainApi.getSavedArticles();
         })
-        .catch((err) => {
-          console.log(`Error: ${err}`);
+        .then((articles) => {
+          setSavedArticles(articles);
+          setIsLoggedIn(true);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
         });
     }
-  }, [isLoggedIn]);
-
+  }, []);
+  
   const searchNews = (topic) => {
+    setCurrentKeyword(topic);
     setIsNewsOpen(false);
     setIsArticlesFound(true);
     setIsLoading(true);
-    newsApi
-      .searchByKeyword(topic, previousDate, currentDate)
-      .then((res) => {
-        setNewsIndex(3);
-        setTopic(topic);
-        setNewsResults(res.articles);
-        if (res.totalResults !== 0) {
-          setIsNewsOpen(true);
-        } else {
-          setIsArticlesFound(false);
-        }
-      })
-      .catch((res) => {
-        setIsArticlesFound(false);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
+    newsApi.searchByKeyword(topic, previousDate, currentDate)
+    .then((res) => {
+      setNewsIndex(3);
+      setNewsResults(res.articles);
+      if(res.totalResults !== 0){
+        setIsNewsOpen(true); 
+      } else{
+        setIsArticlesFound(false);  
+      }
+    })
+    .catch((res) =>{
+      setIsArticlesFound(false);
+    })
+    .finally(() => {
+      setIsLoading(false);
+    })
+  }
 
   const displayedNews = () => {
-    setNewsIndex(newsIndex + 3);
-  };
+    setNewsIndex( newsIndex + 3 );
+  }
 
   const handleEscClose = (evt) => {
     if (evt.key === 'Escape') {
       closeAllPopups();
     }
-  };
-  const handleLogPopupOpen = () => {
+  }
+  const handleLogPopupOpen = () =>{
     setEmail('');
     setPassword('');
     setLogPopupOpen(true);
-    setLogginError(undefined);
-  };
-  const handleRegisterPopupOpen = () => {
+    document.addEventListener('keyup', handleEscClose);
+  }
+  const handleRegisterPopupOpen = () =>{
+    setEmail('');
+    setPassword('');
+    setRegisterPopupOpen(true);
+    document.addEventListener('keyup', handleEscClose);
+  }
+
+  const closeAllPopups = () =>{
+    setLogPopupOpen(false);
+    setRegisterPopupOpen(false);
+    setIsSuccesPopupOpen(false);
+    document.removeEventListener('keyup', handleEscClose);
+  }
+
+  const changePopup = () =>{
     setEmail('');
     setPassword('');
     setUsername('');
-    setSignUpError(undefined);
-    setRegisterPopupOpen(true);
-  };
+    setLogPopupOpen(!isLogPopupOpen);
+    setRegisterPopupOpen(!isRegisterPopupOpen);
+  }
 
-  const closeAllPopups = () => {
-    setLogPopupOpen(false);
-    setRegisterPopupOpen(false);
-  };
-
-  const changePopup = () => {
-    if(isLogPopupOpen === true){
-      console.log('running');
-      setLogPopupOpen(false);
-      handleRegisterPopupOpen();
-      console.log(email);
-    } else{
-      setRegisterPopupOpen(!isRegisterPopupOpen);
-      handleLogPopupOpen();
-    }
-  };
-
-  const succesToLogin = () => {
+  const succesToLogin = () =>{
     setEmail('');
     setPassword('');
     setIsSuccesPopupOpen(false);
     setLogPopupOpen(true);
-  };
-;
+  }
+  
+  const handleValidityLoggin = () =>{
+    if(password !== '' && isEmail !== false){
+      setIsValid(true);
+    } else{
+      setIsValid(false);
+    }
+  }
+
+  const handleValidityRegister = () =>{
+    if(password !== '' && isEmail === true && username !== ''){
+      setIsValid(true);
+    } else{
+      setIsValid(false);
+    }
+  }
   return (
     <Routes>
-      <Route
-        exact
-        path='/'
-        element={
-          <div className='App container'>
-            <CurrentUserContext.Provider value={currentUser}>
-              <Main>
-                <MainFunction
-                  searchNews={searchNews}
-                  isLoggedIn={isLoggedIn}
-                  openLogPopup={handleLogPopupOpen}
-                  location={location.pathname}
-                  loggOut={handleLoggOut}
-                />
-                {
-                  <>
-                    {isLoading && <Loader />}
-                    {!articlesFound && <NoResults />}
-                    {isNewsOpen && (
-                      <News
-                        searchResult={newsResults}
-                        newsIndex={newsIndex}
-                        showMore={displayedNews}
-                        location={location}
-                        isLoggedIn={isLoggedIn}
-                        addNews={addNews}
-                        savedNews={savedNews}
-                        token={jwt}
-                        keyword={topic}
-                        deleteNews={removeNews}
-                        openLoggin={handleLogPopupOpen}
-                      />
-                    )}
-                  </>
-                }
-                <AutorAbout />
-              </Main>
-              <Footer />
-            </CurrentUserContext.Provider>
-            <Signup
-              isLogPopupOpen={isRegisterPopupOpen}
-              isRegisterPopupOpen={isRegisterPopupOpen}
-              handleRegisterPopupOpen = {handleRegisterPopupOpen}
-              closePopups={closeAllPopups}
-              changePopup={changePopup}
-              email={email}
-              password={password}
-              onSubmit={handleSignup}
-              setEmail={setEmail}
-              setPassword={setPassword}
-              setUsername={setUsername}
-              username={username}
-              submitError={signUpError}
-            />
-            <Login 
-              name={'Sign in'}
-              isLogPopupOpen={isLogPopupOpen}
-              isRegisterPopupOpen={isRegisterPopupOpen}
-              closePopups={closeAllPopups}
-              changePopup={changePopup}
-              email={email}
-              password={password}
-              onSubmit={handleLoggIn}
-              setEmail={setEmail}
-              setPassword={setPassword}
-              submitError={loginError}
-            />
-            <SuccesPopup
-              isOpen={isSuccesPopupOpen}
-              closePopups={closeAllPopups}
-              changePopup={succesToLogin}
-            />
-          </div>
-        }
-      />
-      <Route
-        path='/saved-news'
-        element={
-          <div className='App container'>
-            <CurrentUserContext.Provider value={currentUser}>
-              <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <Main>
-                  <MainFunction
-                    searchNews={searchNews}
-                    isLoggedIn={isLoggedIn}
-                    openLogPopup={handleLogPopupOpen}
-                    location={location.pathname}
-                    loggOut={handleLoggOut}
-                    username={username}
-                    savedNews={savedNews}
-                  />
-                  {savedNews.length > 0 && (
-                    <SavedNews
-                      searchResult={savedNews}
-                      newsIndex={newsIndex}
-                      showMore={displayedNews}
-                      location={location}
-                      isLoggedIn={isLoggedIn}
-                      deleteNews={removeNews}
-                    />
-                  )}
-                </Main>
-                <Footer />
-              </ProtectedRoute>
-            </CurrentUserContext.Provider>
-          </div>
-        }
-      />
+      <Route exact path='/' element={<div className='App container'>
+        <Main>
+          <MainFunction 
+          searchNews={searchNews} 
+          isLoggedIn={isLoggedIn}  
+          openLogPopup={handleLogPopupOpen} 
+          location={location.pathname}
+          loggOut={handleLoggOut}
+          username={username}
+          currentUser={currentUser}
+          savedArticles={savedArticles}/>
+          {
+            <>
+             {isLoading &&
+            <Loader />
+            }
+            {!articlesFound &&
+            <NoResults />
+            }
+            {isNewsOpen &&  
+            <News 
+            searchResult={newsResults} 
+            newsIndex={newsIndex} 
+            showMore={displayedNews}
+            location={location}
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSave={handleSaveArticle}
+            onDelete={handleDeleteArticle}/>
+            }
+            </>
+          }
+          <AutorAbout />
+        </Main>
+        <Footer />
+        <Popup name={'Sign up'} 
+          isLogPopupOpen={isRegisterPopupOpen} 
+          isRegisterPopupOpen={isRegisterPopupOpen}
+          openRegisterPopup={handleRegisterPopupOpen}
+          closePopups={closeAllPopups}
+          changePopup={changePopup}
+          changeName={'Sign In'}
+          email={email}
+          password={password}
+          username={username}
+          isValid={isValid}
+          onSubmit={() => handleRegister(email, password, username)}>
+          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityRegister} name='Sign-up Email' />
+          <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityRegister} name='Sign-up Password' />
+          <PopupInput value={username} handleChange={setUsername} vanilaValidate={handleValidityRegister} name='Sign-up Username' />
+        </Popup>
+        <Popup name={'Sign in'} 
+          isLogPopupOpen={isLogPopupOpen} 
+          isRegisterPopupOpen={isRegisterPopupOpen}
+          openRegisterPopup={handleLogPopupOpen}
+          closePopups={closeAllPopups}
+          changePopup={changePopup}
+          changeName={'Sign up'}
+          email={email}
+          password={password}
+          isValid={isValid}
+          onSubmit={() => handleLoggIn(email, password)}>
+          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityLoggin} name='Sign-in Email' />
+          <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityLoggin} name='Sign-in Password' />
+        </Popup>
+        <SuccesPopup 
+          isOpen={isSuccesPopupOpen}
+          closePopups={closeAllPopups}
+          changePopup={succesToLogin}/>
+      </div>} />
+      <Route path='/saved-news' element={
+        <div className='App container'>
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+          <Main>
+          <MainFunction 
+            searchNews={searchNews} 
+            isLoggedIn={isLoggedIn}  
+            openLogPopup={handleLogPopupOpen} 
+            location={location.pathname}
+            loggOut={handleLoggOut}
+            username={username}
+            currentUser={currentUser}
+            savedArticles={savedArticles}
+            isValid={isValid}/>
+            {isNewsOpen &&  
+            <News 
+            searchResult={newsResults} 
+            newsIndex={newsIndex} 
+            showMore={displayedNews}
+            location={location}
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSave={handleSaveArticle}
+            onDelete={handleDeleteArticle}/>
+            }
+        </Main>
+        <Footer />
+        </ProtectedRoute>
+        </div>
+      }/>
       <Route path='*' element={<Navigate to='/' />} />
     </Routes>
   );
-}
+} 
 
 export default App;

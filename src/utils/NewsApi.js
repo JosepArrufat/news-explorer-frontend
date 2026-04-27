@@ -1,5 +1,3 @@
-// 93745731c1fa498691508b39888ff4cb
-const apiKey = "93745731c1fa498691508b39888ff4cb";
 class NewsApi {
     constructor(params) {
       this.baseUrl = params.baseUrl;
@@ -14,7 +12,7 @@ class NewsApi {
     }
   
     searchByKeyword(keyword, date, currentDate) {
-      return fetch(this.baseUrl + `/everything?q=${keyword}&pageSize=100&from=${date}&to=${currentDate}}&apiKey=${apiKey}`, {
+      return fetch(this.baseUrl + `/everything?q=${keyword}&pageSize=100&from=${date}&to=${currentDate}`, {
         headers: this.headers,
         method: "GET",
       }).then((res) => this._checkResponse(res));
@@ -22,12 +20,10 @@ class NewsApi {
   }
   
   const newsApi = new NewsApi({
-      baseUrl: "https://nomoreparties.co/news/v2",
+      baseUrl: "https://newsapi.org/v2",
       headers: {
-          "Authorization": "93745731c1fa498691508b39888ff4cb",
-          "Content-Type": "application/json",
-      },
-      Accept: 'application/json',
-  })
+          "Authorization": process.env.REACT_APP_NEWS_API_KEY
+      }
+  });
   
   export default newsApi;
