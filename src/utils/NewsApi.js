@@ -1,7 +1,6 @@
 class NewsApi {
     constructor(params) {
       this.baseUrl = params.baseUrl;
-      this.apiKey = params.apiKey;
     }
   
     _checkResponse(res) {
@@ -13,7 +12,7 @@ class NewsApi {
   
     searchByKeyword(keyword, date, currentDate) {
       return fetch(
-        `${this.baseUrl}/everything?q=${encodeURIComponent(keyword)}&pageSize=100&from=${date}&to=${currentDate}&apiKey=${this.apiKey}`,
+        `${this.baseUrl}/news?q=${encodeURIComponent(keyword)}&from=${date}&to=${currentDate}`,
         {
           method: "GET",
         }
@@ -22,8 +21,7 @@ class NewsApi {
   }
   
   const newsApi = new NewsApi({
-      baseUrl: "https://newsapi.org/v2",
-      apiKey: process.env.REACT_APP_NEWS_API_KEY,
+    baseUrl: process.env.REACT_APP_API_URL || "https://news-explorer-backend-ev2z.onrender.com",
   });
   
   export default newsApi;

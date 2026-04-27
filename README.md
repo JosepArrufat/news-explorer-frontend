@@ -68,3 +68,5 @@ The app runs on `http://localhost:3000` by default.
 ## Environment
 
 Make sure the API base URL in the `utils/` config points to your backend instance (local or deployed).
+
+The frontend now sends news search requests to the backend proxy endpoint, so the NewsAPI key should live only on the backend.
