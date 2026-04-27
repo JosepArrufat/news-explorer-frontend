@@ -1,5 +1,3 @@
-// 93745731c1fa498691508b39888ff4cb
-
 class NewsApi {
     constructor(params) {
       this.baseUrl = params.baseUrl;
