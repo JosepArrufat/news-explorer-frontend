@@ -32,7 +32,9 @@ export const getUser = () => {
 export const getSavedArticles = () => {
   return fetch(`${BASE_URL}/articles`, {
     headers: { 'Authorization': `Bearer ${getToken()}` },
-  }).then(_checkResponse);
+  })
+    .then(_checkResponse)
+    .then((res) => res.data);
 };
 
 export const saveArticle = (article) => {
@@ -43,12 +45,16 @@ export const saveArticle = (article) => {
       'Authorization': `Bearer ${getToken()}`,
     },
     body: JSON.stringify(article),
-  }).then(_checkResponse);
+  })
+    .then(_checkResponse)
+    .then((res) => res.data);
 };
 
 export const deleteArticle = (articleId) => {
   return fetch(`${BASE_URL}/articles/${articleId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${getToken()}` },
-  }).then(_checkResponse);
+  })
+    .then(_checkResponse)
+    .then((res) => res.data);
 };
