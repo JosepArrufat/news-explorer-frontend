@@ -1,7 +1,7 @@
 import './SavedNewsInfo.css';
 
 function SavedNewsInfo({ currentUser, savedArticles }) {
-  const articles = savedArticles || [];
+  const articles = Array.isArray(savedArticles) ? savedArticles : [];
   const keywords = [...new Set(articles.map((a) => a.keyword).filter(Boolean))];
   const displayedKeywords = keywords.slice(0, 3).join(', ');
   const extra = keywords.length > 3 ? `, and ${keywords.length - 3} other${keywords.length - 3 > 1 ? 's' : ''}` : '';

@@ -20,7 +20,7 @@ function App() {
   const [ isRegisterPopupOpen, setRegisterPopupOpen ] = useState(false);
   const [ isSuccesPopupOpen, setIsSuccesPopupOpen ] = useState(false);
   const [ newsResults, setNewsResults ] = useState([]);
-  const [ newsIndex, setNewsIndex ] = useState(3);
+  const [ newsIndex, setNewsIndex ] = useState(4);
   const [ isNewsOpen, setIsNewsOpen] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ articlesFound, setIsArticlesFound ] = useState(true);
@@ -125,7 +125,7 @@ function App() {
     setIsLoading(true);
     newsApi.searchByKeyword(topic, previousDateString, currentDate)
     .then((res) => {
-      setNewsIndex(3);
+      setNewsIndex(4);
       setNewsResults(res.articles);
       if(res.totalResults !== 0){
         setIsNewsOpen(true); 
@@ -142,7 +142,7 @@ function App() {
   }
 
   const displayedNews = () => {
-    setNewsIndex( newsIndex + 3 );
+    setNewsIndex( newsIndex + 4 );
   }
 
   const handleEscClose = (evt) => {
@@ -221,7 +221,7 @@ function App() {
             {!articlesFound &&
             <NoResults />
             }
-            {isNewsOpen &&  
+            {isNewsOpen && location.pathname !== '/saved-news' &&  
             <News 
             searchResult={newsResults} 
             newsIndex={newsIndex} 
@@ -286,7 +286,17 @@ function App() {
             currentUser={currentUser}
             savedArticles={savedArticles}
             isValid={isValid}/>
-            {isNewsOpen &&  
+            {location.pathname === '/saved-news' &&  
+            <News 
+            searchResult={savedArticles} 
+            newsIndex={savedArticles.length} 
+            location={location}
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSave={handleSaveArticle}
+            onDelete={handleDeleteArticle}/>
+            }
+            {isNewsOpen && location.pathname !== '/saved-news' &&  
             <News 
             searchResult={newsResults} 
             newsIndex={newsIndex} 
