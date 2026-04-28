@@ -153,12 +153,14 @@ function App() {
   const handleLogPopupOpen = () =>{
     setEmail('');
     setPassword('');
+    setIsValid(false);
     setLogPopupOpen(true);
     document.addEventListener('keyup', handleEscClose);
   }
   const handleRegisterPopupOpen = () =>{
     setEmail('');
     setPassword('');
+    setIsValid(false);
     setRegisterPopupOpen(true);
     document.addEventListener('keyup', handleEscClose);
   }
@@ -167,6 +169,7 @@ function App() {
     setLogPopupOpen(false);
     setRegisterPopupOpen(false);
     setIsSuccesPopupOpen(false);
+    setIsValid(false);
     document.removeEventListener('keyup', handleEscClose);
   }
 
@@ -174,6 +177,7 @@ function App() {
     setEmail('');
     setPassword('');
     setUsername('');
+    setIsValid(false);
     setLogPopupOpen(!isLogPopupOpen);
     setRegisterPopupOpen(!isRegisterPopupOpen);
   }
@@ -182,24 +186,29 @@ function App() {
     setEmail('');
     setPassword('');
     setIsSuccesPopupOpen(false);
+    setIsValid(false);
     setLogPopupOpen(true);
   }
-  
-  const handleValidityLoggin = () =>{
-    if(password !== '' && isEmail !== false){
-      setIsValid(true);
-    } else{
-      setIsValid(false);
-    }
-  }
 
-  const handleValidityRegister = () =>{
-    if(password !== '' && isEmail === true && username !== ''){
-      setIsValid(true);
-    } else{
-      setIsValid(false);
+  useEffect(() => {
+    if (isLogPopupOpen) {
+      setIsValid(password !== '' && isEmail);
+      return;
     }
-  }
+
+    if (isRegisterPopupOpen) {
+      setIsValid(password !== '' && isEmail && username !== '');
+      return;
+    }
+
+    setIsValid(false);
+  }, [
+    isLogPopupOpen,
+    isRegisterPopupOpen,
+    password,
+    isEmail,
+    username,
+  ]);
   return (
     <Routes>
       <Route exact path='/' element={<div className='App container'>
@@ -249,9 +258,9 @@ function App() {
           username={username}
           isValid={isValid}
           onSubmit={() => handleRegister(email, password, username)}>
-          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityRegister} name='Sign-up Email' />
-          <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityRegister} name='Sign-up Password' />
-          <PopupInput value={username} handleChange={setUsername} vanilaValidate={handleValidityRegister} name='Sign-up Username' />
+          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} name='Sign-up Email' />
+          <PopupInput value={password} handleChange={setPassword} name='Sign-up Password' />
+          <PopupInput value={username} handleChange={setUsername} name='Sign-up Username' />
         </Popup>
         <Popup name={'Sign in'} 
           isLogPopupOpen={isLogPopupOpen} 
@@ -264,8 +273,8 @@ function App() {
           password={password}
           isValid={isValid}
           onSubmit={() => handleLoggIn(email, password)}>
-          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} vanilaValidate={handleValidityLoggin} name='Sign-in Email' />
-          <PopupInput value={password} handleChange={setPassword} vanilaValidate={handleValidityLoggin} name='Sign-in Password' />
+          <PopupInput value={email} handleChange={setEmail} isEmail={setIsEmail} name='Sign-in Email' />
+          <PopupInput value={password} handleChange={setPassword} name='Sign-in Password' />
         </Popup>
         <SuccesPopup 
           isOpen={isSuccesPopupOpen}
