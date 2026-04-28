@@ -9,6 +9,19 @@ React frontend for the News Explorer app. Users can search for news articles via
 - Frontend: [https://news-explorer-frontend-josep.vercel.app/](https://news-explorer-frontend-josep.vercel.app/)
 - Backend API: [https://news-explorer-backend-ev2z.onrender.com](https://news-explorer-backend-ev2z.onrender.com)
 
+## Demo Flow
+
+The GIFs below show the full user journey in order:
+
+1. Sign up
+   - ![Signup demo](docs/signup.gif)
+2. Log in
+   - ![Login demo](docs/login.gif)
+3. News search
+   - ![News search demo](docs/news.gif)
+4. Save one article
+   - ![Save article demo](docs/save1.gif)
+
 ---
 
 ## Features
