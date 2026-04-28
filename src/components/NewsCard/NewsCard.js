@@ -56,8 +56,8 @@ function NewsCard({ newInfo, location, isLoggedIn, savedArticles, onSave, onDele
         )}
           {location.pathname === "/saved-news" ? (
            <p className='news__save-text'>Remove from Saved</p>
-        ) : !isLoggedIn ? (
-            <p className='news__save-text'>Sign in to save articles</p>
+        ) : (
+          !isLoggedIn && <p className='news__save-text'>Sign in to save articles</p>
         )}
         {location.pathname === "/saved-news" ? (
             <p className='news__save-tag'>{articleSource}</p>
