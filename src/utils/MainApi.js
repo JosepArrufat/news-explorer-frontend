@@ -7,11 +7,11 @@ const _checkResponse = (res) => {
 
 const getToken = () => localStorage.getItem('token');
 
-export const register = (email, password, name) => {
+export const register = (email, password, username) => {
   return fetch(`${BASE_URL}/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify({ email, password, username }),
   }).then(_checkResponse);
 };
 

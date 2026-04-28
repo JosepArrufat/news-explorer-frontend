@@ -5,7 +5,7 @@ function SavedNewsInfo({ currentUser, savedArticles }) {
   const keywords = [...new Set(articles.map((a) => a.keyword).filter(Boolean))];
   const displayedKeywords = keywords.slice(0, 3).join(', ');
   const extra = keywords.length > 3 ? `, and ${keywords.length - 3} other${keywords.length - 3 > 1 ? 's' : ''}` : '';
-  const username = currentUser ? currentUser.name : 'User';
+  const username = currentUser ? currentUser.username : 'User';
 
   return (
     <div className='saved-news'>

@@ -48,7 +48,7 @@ function App() {
       })
       .then((user) => {
         setCurrentUser(user);
-        setUsername(user.name);
+        setUsername(user.username);
         return mainApi.getSavedArticles();
       })
       .then((articles) => {
@@ -105,7 +105,7 @@ function App() {
       mainApi.getUser()
         .then((user) => {
           setCurrentUser(user);
-          setUsername(user.name);
+          setUsername(user.username);
           return mainApi.getSavedArticles();
         })
         .then((articles) => {
